@@ -1,0 +1,286 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    font-family: 'Poppins', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html, body {
+    @apply min-h-screen w-full bg-slate-50 text-slate-900 transition-colors duration-300;
+    overflow-x: hidden;
+  }
+}
+
+/* Premium Class-Based Dark Mode Styles (#0F172A background, #1E293B cards) */
+html.dark, html.dark body {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+html.dark body {
+  background-color: #0f172a !important;
+}
+
+/* Navbar in Dark Mode */
+html.dark nav {
+  background-color: rgba(15, 23, 42, 0.85) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Sidebars and Drawers in Dark Mode */
+html.dark aside,
+html.dark .sidebar,
+html.dark .settings-panel {
+  background-color: #1e293b !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #f8fafc !important;
+}
+
+/* White Cards and Form Containers in Dark Mode */
+html.dark .bg-white {
+  background-color: #1e293b !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #f8fafc !important;
+}
+
+/* Background Secondary Surfaces in Dark Mode */
+html.dark .bg-gray-50,
+html.dark .bg-slate-50 {
+  background-color: #0f172a !important;
+}
+
+html.dark .bg-slate-100,
+html.dark .bg-gray-100 {
+  background-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+/* UNIFORM DARK MODE ACTION BAR STYLING */
+html.dark .action-btn-save,
+html.dark .action-btn-share,
+html.dark .action-btn-copy,
+html.dark .action-btn-print,
+html.dark .action-btn-pdf,
+html.dark .action-btn-grocery {
+  background-color: rgba(51, 65, 85, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #f8fafc !important;
+}
+
+/* Hover Accent Highlights in Dark Mode */
+html.dark .action-btn-save:hover {
+  background-color: rgba(244, 63, 94, 0.25) !important;
+  color: #fb7185 !important;
+  border-color: rgba(244, 63, 94, 0.4) !important;
+}
+html.dark .action-btn-share:hover {
+  background-color: rgba(59, 130, 246, 0.25) !important;
+  color: #60a5fa !important;
+  border-color: rgba(59, 130, 246, 0.4) !important;
+}
+html.dark .action-btn-copy:hover {
+  background-color: rgba(148, 163, 184, 0.25) !important;
+  color: #f1f5f9 !important;
+  border-color: rgba(148, 163, 184, 0.4) !important;
+}
+html.dark .action-btn-print:hover {
+  background-color: rgba(168, 85, 247, 0.25) !important;
+  color: #c084fc !important;
+  border-color: rgba(168, 85, 247, 0.4) !important;
+}
+html.dark .action-btn-pdf:hover {
+  background-color: rgba(245, 158, 11, 0.25) !important;
+  color: #fbbf24 !important;
+  border-color: rgba(245, 158, 11, 0.4) !important;
+}
+html.dark .action-btn-grocery:hover {
+  background-color: rgba(16, 185, 129, 0.25) !important;
+  color: #34d399 !important;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+}
+
+/* HIGH-CONTRAST NUTRITION SECTION FOR DARK MODE */
+html.dark .nutrition-card-emerald {
+  background-color: rgba(6, 78, 59, 0.7) !important;
+  border-color: rgba(52, 211, 153, 0.4) !important;
+}
+html.dark .nutrition-card-emerald .nutrition-label {
+  color: #a7f3d0 !important;
+}
+html.dark .nutrition-card-emerald .nutrition-value {
+  color: #34d399 !important;
+}
+
+html.dark .nutrition-card-blue {
+  background-color: rgba(30, 58, 138, 0.7) !important;
+  border-color: rgba(96, 165, 250, 0.4) !important;
+}
+html.dark .nutrition-card-blue .nutrition-label {
+  color: #bfdbfe !important;
+}
+html.dark .nutrition-card-blue .nutrition-value {
+  color: #60a5fa !important;
+}
+
+html.dark .nutrition-card-amber {
+  background-color: rgba(120, 53, 15, 0.7) !important;
+  border-color: rgba(251, 191, 36, 0.4) !important;
+}
+html.dark .nutrition-card-amber .nutrition-label {
+  color: #fde68a !important;
+}
+html.dark .nutrition-card-amber .nutrition-value {
+  color: #fbbf24 !important;
+}
+
+html.dark .nutrition-card-rose {
+  background-color: rgba(136, 19, 55, 0.7) !important;
+  border-color: rgba(251, 113, 133, 0.4) !important;
+}
+html.dark .nutrition-card-rose .nutrition-label {
+  color: #fecdd3 !important;
+}
+html.dark .nutrition-card-rose .nutrition-value {
+  color: #fb7185 !important;
+}
+
+/* Text Overrides for Dark Mode */
+html.dark .text-slate-900,
+html.dark .text-slate-800,
+html.dark .text-slate-700 {
+  color: #f8fafc !important;
+}
+
+html.dark .text-slate-600,
+html.dark .text-slate-500,
+html.dark .text-gray-600,
+html.dark .text-gray-500 {
+  color: #cbd5e1 !important;
+}
+
+html.dark .text-gray-400 {
+  color: #94a3b8 !important;
+}
+
+/* Borders in Dark Mode */
+html.dark .border-gray-200,
+html.dark .border-slate-200,
+html.dark .border-gray-100 {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Bottom Input Floating Bar in Dark Mode */
+html.dark .bg-slate-50,
+html.dark .bg-slate-50\/95 {
+  background-color: rgba(15, 23, 42, 0.95) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Form inputs in Dark Mode */
+html.dark input[type="text"] {
+  color: #f8fafc !important;
+}
+html.dark input[type="text"]::placeholder {
+  color: #64748b !important;
+}
+
+/* Hover effects in Dark Mode */
+html.dark .hover-bg-slate:hover {
+  background-color: #334155 !important;
+}
+
+/* Shimmer Loader in Dark Mode */
+html.dark .shimmer {
+  background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%) !important;
+  background-size: 200% 100% !important;
+  animation: shimmer 1.5s infinite !important;
+}
+
+/* Custom Animations & Utilities */
+.scrollbar-none::-webkit-scrollbar { display: none; }
+.scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+
+.user-bubble {
+  background: linear-gradient(135deg, #10B981, #059669);
+}
+
+.typing-dot {
+  animation: bounce 1.4s infinite ease-in-out;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.float-anim { animation: float 3s ease-in-out infinite; }
+.float-anim-2 { animation: float 4s ease-in-out infinite 1s; }
+.float-anim-3 { animation: float 3.5s ease-in-out infinite 0.5s; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-up { animation: fadeUp 0.6s ease forwards; }
+
+.floating-icon {
+  font-size: 2.5rem;
+  opacity: 0.25;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.05));
+}
+
+.chip {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.chip:hover {
+  transform: translateY(-2px) scale(1.04);
+  border-color: #10B981;
+  color: #059669;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+.sidebar {
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.sidebar.open {
+  transform: translateX(0);
+}
+
+.settings-panel {
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.settings-panel.open {
+  transform: translateX(0);
+}
+
+.overlay {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.shimmer {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
