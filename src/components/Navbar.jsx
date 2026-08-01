@@ -26,17 +26,13 @@ export default function Navbar({
           {/* Logo & Brand - Clickable Home Trigger */}
           <div
             onClick={onGoHome}
-            className="flex items-center gap-2 cursor-pointer group"
+            className="flex items-center gap-2 cursor-pointer group ml-1 sm:ml-2"
             title="Go to Home"
           >
             <span className="text-xl sm:text-2xl group-hover:scale-110 transition-transform">🧑‍🍳</span>
             <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
               ChefAI
             </h1>
-            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              v2.0 AI Online
-            </span>
           </div>
         </div>
 

@@ -421,8 +421,13 @@ function ChefAIAppContent() {
             <>
               {/* Landing Hero View */}
               <HeroSection
-                onStartCooking={() => {
-                  setActiveView('home');
+                onSelectQuery={handleQuery}
+                onSelectChip={(chipVal) => {
+                  setInputVal((prev) => (prev ? `${prev}, ${chipVal}` : chipVal));
+                  const el = document.getElementById('chat-input');
+                  el?.focus();
+                }}
+                onFocusInput={() => {
                   const el = document.getElementById('chat-input');
                   el?.focus();
                   setTimeout(() => {

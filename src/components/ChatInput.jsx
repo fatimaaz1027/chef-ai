@@ -144,9 +144,6 @@ export default function ChatInput({ inputVal, setInputVal, onSubmit }) {
           </div>
         )}
 
-        {/* Ingredient Quick Chips */}
-        <QuickChips onSelectChip={handleChipSelect} />
-
         {/* Mobile-Optimized Input Form Container */}
         <form
           onSubmit={handleSubmitForm}
