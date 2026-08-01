@@ -26,6 +26,7 @@ export default function Sidebar({
   onOpenPersonalized,
   onOpenScanIngredients,
   onOpenMealPlanner,
+  onSelectRecipe,
   onSelectChat,
   onSelectFeature,
   onOpenSettings
@@ -36,7 +37,6 @@ export default function Sidebar({
   const [isAIOpen, setIsAIOpen] = useState(false);
   const [historyData, setHistoryData] = useState({
     generated: [],
-    viewed: [],
     saved: [],
     favorites: [],
   });
@@ -62,14 +62,16 @@ export default function Sidebar({
   };
 
   const handleSelectRecipe = (recipe) => {
-    historyManager.addViewedRecipe(recipe);
     onNavigate('home');
-    onSelectChat(recipe.name);
+    if (onSelectRecipe) {
+      onSelectRecipe(recipe);
+    } else if (onSelectChat) {
+      onSelectChat(recipe.name);
+    }
   };
 
   const hasHistory =
     historyData.generated.length > 0 ||
-    historyData.viewed.length > 0 ||
     historyData.saved.length > 0 ||
     historyData.favorites.length > 0;
 
@@ -293,26 +295,6 @@ export default function Sidebar({
                           className="w-full text-left p-2 rounded-xl hover:bg-emerald-50 transition min-h-[38px] flex items-center gap-2 group"
                         >
                           <span className="text-sm">{item.img || '🍲'}</span>
-                          <p className="text-xs font-medium text-slate-700 truncate group-hover:text-emerald-700">
-                            {item.name}
-                          </p>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {historyData.viewed.length > 0 && (
-                  <div>
-                    <p className="text-[10px] font-semibold text-gray-400 mb-1">Recently Viewed</p>
-                    <div className="space-y-1">
-                      {historyData.viewed.slice(0, 5).map((item, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => handleSelectRecipe(item)}
-                          className="w-full text-left p-2 rounded-xl hover:bg-emerald-50 transition min-h-[38px] flex items-center gap-2 group"
-                        >
-                          <span className="text-sm">{item.img || '🥗'}</span>
                           <p className="text-xs font-medium text-slate-700 truncate group-hover:text-emerald-700">
                             {item.name}
                           </p>

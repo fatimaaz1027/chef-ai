@@ -103,8 +103,6 @@ export default function RecipeCard({ recipe, onOpenGrocery, onSelectSimilar, onR
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   useEffect(() => {
-    // Record view in history
-    historyManager.addViewedRecipe(recipe);
     const syncSaved = () => {
       const saved = historyManager.getFavorites().some((r) => r.name === recipe.name);
       setIsSaved(saved);
@@ -118,11 +116,9 @@ export default function RecipeCard({ recipe, onOpenGrocery, onSelectSimilar, onR
 
   const tags = getRecipeTags(recipe);
   const dietary = recipe.dietary || ['🌱 Dairy-Free Option', '🥜 Nut-Free', '🌾 Gluten-Free Available'];
-  const similarRecipes = recipe.similar || [
-    { name: 'Avocado Toast with Egg', time: '10 min', calories: '240 cal', img: '🥑' },
-    { name: 'Mediterranean Salad', time: '15 min', calories: '180 cal', img: '🥗' },
-    { name: 'Garlic Butter Shrimp', time: '20 min', calories: '310 cal', img: '🦐' }
-  ];
+  const similarRecipes = Array.isArray(recipe.similar)
+    ? recipe.similar
+    : [];
 
   const triggerToast = (msg) => {
     setToastMessage(msg);

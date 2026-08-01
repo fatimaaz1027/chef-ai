@@ -3,7 +3,6 @@ const KEYS = {
   SAVED: 'chefai_saved_recipes',
   FAVORITES: 'chefai_favorite_recipes',
   GENERATED: 'chefai_generated_recipes',
-  VIEWED: 'chefai_viewed_recipes',
   GROCERY: 'chefai_grocery_items',
 };
 
@@ -148,19 +147,29 @@ export const historyManager = {
     return getItems(KEYS.GENERATED);
   },
   addGeneratedRecipe(recipe) {
-    const list = this.getGeneratedRecipes().filter((r) => r.name !== recipe.name);
-    const updated = [{ ...recipe, timestamp: Date.now() }, ...list].slice(0, 30);
-    setItems(KEYS.GENERATED, updated);
-  },
+    if (!recipe || !recipe.name) return;
+    const list = this.getGeneratedRecipes();
+    const nameClean = recipe.name.trim().toLowerCase();
+    const existingIndex = list.findIndex(
+      (r) => r && r.name && r.name.trim().toLowerCase() === nameClean
+    );
 
-  // --- Recently Viewed ---
-  getViewedRecipes() {
-    return getItems(KEYS.VIEWED);
-  },
-  addViewedRecipe(recipe) {
-    const list = this.getViewedRecipes().filter((r) => r.name !== recipe.name);
-    const updated = [{ ...recipe, timestamp: Date.now() }, ...list].slice(0, 30);
-    setItems(KEYS.VIEWED, updated);
+    let updatedRecipe = { ...recipe, timestamp: Date.now() };
+
+    let newList;
+    if (existingIndex !== -1) {
+      const existingItem = list[existingIndex];
+      updatedRecipe = {
+        ...existingItem,
+        ...recipe,
+        timestamp: Date.now(),
+      };
+      newList = [updatedRecipe, ...list.filter((_, idx) => idx !== existingIndex)];
+    } else {
+      newList = [updatedRecipe, ...list];
+    }
+
+    setItems(KEYS.GENERATED, newList.slice(0, 30));
   },
 
   // --- Search History ---
@@ -168,7 +177,6 @@ export const historyManager = {
     if (!query.trim()) {
       return {
         generated: this.getGeneratedRecipes(),
-        viewed: this.getViewedRecipes(),
         saved: this.getSavedRecipes(),
         favorites: this.getFavorites(),
       };
@@ -180,7 +188,6 @@ export const historyManager = {
 
     return {
       generated: this.getGeneratedRecipes().filter(filterFn),
-      viewed: this.getViewedRecipes().filter(filterFn),
       saved: this.getSavedRecipes().filter(filterFn),
       favorites: this.getFavorites().filter(filterFn),
     };
@@ -191,7 +198,8 @@ export const historyManager = {
     localStorage.removeItem(KEYS.SAVED);
     localStorage.removeItem(KEYS.FAVORITES);
     localStorage.removeItem(KEYS.GENERATED);
-    localStorage.removeItem(KEYS.VIEWED);
+    localStorage.removeItem('chefai_viewed_recipes');
+    notifyDataChanged();
   },
 
   // ==========================================

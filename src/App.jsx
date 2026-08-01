@@ -18,6 +18,7 @@ import ScanIngredientsModal from './components/ScanIngredientsModal';
 import MealPlannerModal from './components/MealPlannerModal';
 import { findOrGenerateRecipe } from './data/recipes';
 import { historyManager } from './utils/historyManager';
+import { sendMessageToGemini } from './services/geminiService';
 
 export default function App() {
   // Strict Theme Initialization: Always start in Light Mode if no saved preference exists
@@ -41,6 +42,22 @@ export default function App() {
   const [messages, setMessages] = useState([]);
 
   const handleMealRecipeSubmit = (recipe) => {
+    if (recipe) {
+      historyManager.addGeneratedRecipe(recipe);
+    }
+    setActiveView('home');
+    setIsChatActive(true);
+    const botMsg = {
+      id: Date.now(),
+      sender: 'bot',
+      type: 'recipe',
+      recipe: recipe
+    };
+    setMessages((prev) => [...prev, botMsg]);
+  };
+
+  const handleOpenSavedRecipe = (recipe) => {
+    if (!recipe) return;
     setActiveView('home');
     setIsChatActive(true);
     const botMsg = {
@@ -93,37 +110,84 @@ export default function App() {
     setActiveView('grocery');
   };
 
-  const handleSelectSimilar = (recipeName) => {
+  const handleSelectSimilar = async (recipeName) => {
     if (!recipeName || !recipeName.trim()) return;
 
     setActiveView('home');
     setIsChatActive(true);
     setInputVal('');
 
-    const formattedQuery = `Show recipe for ${recipeName}`;
+    const rawText = `Give me the complete recipe for ${recipeName.trim()}`;
 
-    // 1. Add user message
-    const userMsg = { id: Date.now(), type: 'user', text: formattedQuery };
-    const typingMsg = { id: Date.now() + 1, type: 'typing' };
+    const userMsg = {
+      id: Date.now(),
+      type: 'user',
+      text: rawText,
+    };
+
+    const typingMsg = {
+      id: Date.now() + 1,
+      type: 'typing',
+    };
 
     setMessages((prev) => [...prev, userMsg, typingMsg]);
 
-    // 2. Simulate AI response delay
-    setTimeout(() => {
-      const matchedRecipe = findOrGenerateRecipe(recipeName);
+    try {
+      const response = await fetch('http://localhost:5000/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: rawText,
+        }),
+      });
 
-      // Save generated recipe to user history
-      historyManager.addGeneratedRecipe(matchedRecipe);
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      console.log('Similar recipe response:', data);
+
+      setMessages((prev) =>
+        prev.filter((m) => m.type !== 'typing')
+      );
+
+      if (data.type === 'recipe' && data.recipe) {
+        historyManager.addGeneratedRecipe(data.recipe);
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now() + 2,
+            type: 'recipe',
+            recipe: data.recipe,
+          },
+        ]);
+
+        return;
+      }
+
+      throw new Error('ChefAI did not return a recipe.');
+
+    } catch (error) {
+      console.error('Similar recipe error:', error);
 
       setMessages((prev) =>
         prev
           .filter((m) => m.type !== 'typing')
-          .concat({ id: Date.now() + 2, type: 'recipe', recipe: matchedRecipe })
+          .concat({
+            id: Date.now() + 3,
+            type: 'bot',
+            text: `Sorry, I couldn't generate the ${recipeName} recipe right now. Please try again.`,
+          })
       );
-    }, 1200);
+    }
   };
 
-  const handleQuery = (queryText) => {
+  const handleQuery = async (queryText) => {
     if (!queryText || !queryText.trim()) return;
 
     setActiveView('home');
@@ -132,59 +196,118 @@ export default function App() {
 
     const rawText = queryText.trim();
 
-    // 1. ALWAYS ADD AND DISPLAY THE EXACT USER MESSAGE IMMEDIATELY
-    const userMsg = { id: Date.now(), type: 'user', text: rawText };
-    const typingMsg = { id: Date.now() + 1, type: 'typing' };
+    // Show user's message immediately
+    const userMsg = {
+      id: Date.now(),
+      type: 'user',
+      text: rawText,
+    };
+
+    const typingMsg = {
+      id: Date.now() + 1,
+      type: 'typing',
+    };
 
     setMessages((prev) => [...prev, userMsg, typingMsg]);
 
-    // 2. PROCESS INTENT & GENERATE BOT RESPONSE SAFELY AFTER USER MESSAGE IS ACCEPTED
-    setTimeout(() => {
-      let intent = { type: 'recipe' };
-      try {
-        intent = classifyUserIntent(rawText);
-      } catch (e) {
-        console.error("Intent classification fallback:", e);
+    try {
+      // Send message to ChefAI backend
+      const response = await fetch('http://localhost:5000/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: rawText,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
       }
 
-      if (intent.type === 'conversational' || intent.type === 'cooking_qa') {
-        setMessages((prev) =>
-          prev
-            .filter((m) => m.type !== 'typing')
-            .concat({ id: Date.now() + 2, type: 'bot', text: intent.text })
-        );
-      } else {
-        try {
-          const matchedRecipe = findOrGenerateRecipe(rawText);
+      const data = await response.json();
 
-          if (matchedRecipe) {
-            historyManager.addGeneratedRecipe(matchedRecipe);
-            setMessages((prev) =>
-              prev
-                .filter((m) => m.type !== 'typing')
-                .concat({ id: Date.now() + 2, type: 'recipe', recipe: matchedRecipe })
-            );
-          } else {
-            setMessages((prev) =>
-              prev
-                .filter((m) => m.type !== 'typing')
-                .concat({
-                  id: Date.now() + 2,
-                  type: 'bot',
-                  text: "I'm ChefAI, your personal cooking assistant! 🧑‍🍳 Ask me for recipe ideas by listing your ingredients (e.g., 'tomatoes, chicken, rice') or ask me how to cook your favorite dish!"
-                })
-            );
-          }
-        } catch (e) {
-          console.error("Recipe generation fallback:", e);
-          setMessages((prev) =>
-            prev
-              .filter((m) => m.type !== 'typing')
-              .concat({ id: Date.now() + 2, type: 'bot', text: "I'm ChefAI, your personal cooking assistant! 🧑‍🍳 Tell me what ingredients you have in your kitchen today!" })
-          );
-        }
+      console.log('ChefAI API response:', data);
+
+      // Remove typing indicator
+      setMessages((prev) =>
+        prev.filter((m) => m.type !== 'typing')
+      );
+
+      // --------------------------------
+      // RECIPE RESPONSE
+      // --------------------------------
+      if (data.type === 'recipe' && data.recipe) {
+        const recipe = data.recipe;
+
+        // Save generated recipe to history
+        historyManager.addGeneratedRecipe(recipe);
+
+        // Display using existing beautiful RecipeCard
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now() + 2,
+            type: 'recipe',
+            recipe: recipe,
+          },
+        ]);
+
+        return;
       }
-    }, 600);
+
+      // --------------------------------
+      // NORMAL BOT RESPONSE
+      // --------------------------------
+      if (data.type === 'bot' && data.text) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now() + 2,
+            type: 'bot',
+            text: data.text,
+          },
+        ]);
+
+        return;
+      }
+
+      // --------------------------------
+      // BACKWARD COMPATIBILITY
+      // --------------------------------
+      if (data.reply) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now() + 2,
+            type: 'bot',
+            text: data.reply,
+          },
+        ]);
+
+        return;
+      }
+
+      // Unexpected response
+      throw new Error(
+        'Invalid response received from ChefAI server.'
+      );
+
+    } catch (error) {
+      console.error('ChefAI request error:', error);
+
+      setMessages((prev) =>
+        prev
+          .filter((m) => m.type !== 'typing')
+          .concat({
+            id: Date.now() + 3,
+            type: 'bot',
+            text:
+              'Sorry, I could not connect to ChefAI right now. Please make sure the ChefAI server is running.',
+          })
+      );
+    }
   };
 
   return (
@@ -195,9 +318,8 @@ export default function App() {
       {/* Global Backdrop Overlay */}
       <div
         id="overlay"
-        className={`fixed inset-0 bg-black/30 z-30 overlay ${
-          isSidebarOpen || isSettingsOpen ? 'active' : ''
-        }`}
+        className={`fixed inset-0 bg-black/30 z-30 overlay ${isSidebarOpen || isSettingsOpen ? 'active' : ''
+          }`}
         onClick={handleClosePanels}
       ></div>
 
@@ -212,6 +334,10 @@ export default function App() {
         onOpenPersonalized={() => setIsPersonalizedOpen(true)}
         onOpenScanIngredients={() => setIsScanIngredientsOpen(true)}
         onOpenMealPlanner={() => setIsMealPlannerOpen(true)}
+        onSelectRecipe={(recipe) => {
+          handleClosePanels();
+          handleOpenSavedRecipe(recipe);
+        }}
         onSelectChat={(title) => {
           handleClosePanels();
           handleQuery(title);

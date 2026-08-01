@@ -1,4 +1,6 @@
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
+
 import RecipeCard from './RecipeCard';
 import SkeletonLoader from './SkeletonLoader';
 
@@ -23,9 +25,11 @@ export default function ChatMessage({ message, onOpenGrocery, onSelectSimilar })
     return (
       <div className="flex justify-start fade-up">
         <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 px-4 sm:px-5 py-3 rounded-2xl rounded-tl-md max-w-[85%] sm:max-w-[80%] shadow-md border border-gray-100 dark:border-slate-700/80">
-          <p className="text-xs sm:text-sm font-medium leading-relaxed">
-            {message.text}
-          </p>
+          <div className="text-xs sm:text-sm font-medium leading-relaxed prose prose-sm max-w-none dark:prose-invert">
+            <ReactMarkdown>
+              {message.text}
+            </ReactMarkdown>
+          </div>
         </div>
       </div>
     );
