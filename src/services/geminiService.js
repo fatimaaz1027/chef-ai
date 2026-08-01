@@ -14,7 +14,7 @@ export async function sendMessageToGemini(message) {
             throw new Error(data.error || "Failed to get Gemini response");
         }
 
-        return data.reply;
+        return data;
     } catch (error) {
         console.error("Gemini service error:", error);
         throw error;
