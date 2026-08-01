@@ -4,7 +4,7 @@ import { X, Sparkles, RotateCcw, AlertCircle } from 'lucide-react';
 export default function PersonalizedModal({ isOpen, onClose, onSubmitQuery }) {
   const [dietary, setDietary] = useState('Any');
   const [cuisine, setCuisine] = useState('Any');
-  const [goal, setGoal] = useState('Any');
+  const [goals, setGoals] = useState(['Any']);
   const [avoid, setAvoid] = useState('None');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -18,14 +18,38 @@ export default function PersonalizedModal({ isOpen, onClose, onSubmitQuery }) {
   const handleReset = () => {
     setDietary('Any');
     setCuisine('Any');
-    setGoal('Any');
+    setGoals(['Any']);
     setAvoid('None');
     setErrorMessage('');
   };
 
+  const handleGoalClick = (opt) => {
+    if (opt === 'Any') {
+      setGoals(['Any']);
+      setErrorMessage('');
+      return;
+    }
+
+    const currentWithoutAny = goals.filter((g) => g !== 'Any');
+
+    if (currentWithoutAny.includes(opt)) {
+      const next = currentWithoutAny.filter((g) => g !== opt);
+      setGoals(next.length === 0 ? ['Any'] : next);
+      setErrorMessage('');
+    } else {
+      if (currentWithoutAny.length >= 2) {
+        setErrorMessage('You can select up to 2 cooking goals.');
+      } else {
+        setGoals([...currentWithoutAny, opt]);
+        setErrorMessage('');
+      }
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (dietary === 'Any' && cuisine === 'Any' && goal === 'Any' && avoid === 'None') {
+    const isGoalDefault = goals.length === 0 || (goals.length === 1 && goals[0] === 'Any');
+    if (dietary === 'Any' && cuisine === 'Any' && isGoalDefault && avoid === 'None') {
       setErrorMessage('Please select at least one preference to get personalized recommendations!');
       return;
     }
@@ -34,7 +58,9 @@ export default function PersonalizedModal({ isOpen, onClose, onSubmitQuery }) {
     const parts = [];
     if (dietary !== 'Any') parts.push(dietary);
     if (cuisine !== 'Any') parts.push(`${cuisine} cuisine`);
-    if (goal !== 'Any') parts.push(goal);
+    if (!isGoalDefault) {
+      parts.push(goals.join(', '));
+    }
     if (avoid !== 'None') parts.push(`avoiding ${avoid}`);
 
     const query = `Give me personalized recipe recommendations for ${parts.join(', ')}`;
@@ -136,27 +162,32 @@ export default function PersonalizedModal({ isOpen, onClose, onSubmitQuery }) {
 
           {/* Goal & Attribute */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
-              🎯 Cooking Goal
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                🎯 Cooking Goal
+              </label>
+              <span className="text-[10px] text-slate-400 dark:text-slate-400 font-normal">
+                You can select up to 2 options
+              </span>
+            </div>
             <div className="flex flex-wrap gap-2">
-              {goalOptions.map((opt) => (
-                <button
-                  key={opt}
-                  type="button"
-                  onClick={() => {
-                    setGoal(opt);
-                    setErrorMessage('');
-                  }}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition border min-h-[36px] ${
-                    goal === opt
-                      ? 'bg-emerald-500 text-white border-emerald-500 shadow-sm'
-                      : 'bg-gray-50 dark:bg-slate-700/60 text-slate-700 dark:text-slate-300 border-gray-200 dark:border-slate-600 hover:border-emerald-400'
-                  }`}
-                >
-                  {opt}
-                </button>
-              ))}
+              {goalOptions.map((opt) => {
+                const isSelected = goals.includes(opt);
+                return (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => handleGoalClick(opt)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition border min-h-[36px] ${
+                      isSelected
+                        ? 'bg-emerald-500 text-white border-emerald-500 shadow-sm'
+                        : 'bg-gray-50 dark:bg-slate-700/60 text-slate-700 dark:text-slate-300 border-gray-200 dark:border-slate-600 hover:border-emerald-400'
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
