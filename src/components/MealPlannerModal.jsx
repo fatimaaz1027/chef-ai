@@ -9,12 +9,64 @@ export default function MealPlannerModal({ isOpen, onClose, onSubmitRecipe }) {
   const [preferences, setPreferences] = useState({
     duration: '7',
     mealsPerDay: 'Breakfast + Lunch + Dinner',
-    dietary: 'No Preference',
+    dietary: ['No Preference'],
     cuisine: 'Any Cuisine',
     spice: 'No Preference',
     budget: 'No Preference',
     skill: 'Any Level'
   });
+
+  const dietaryOptions = [
+    'No Preference',
+    'Vegetarian',
+    'High Protein',
+    'Low Carb',
+    'Dairy-Free',
+    'Gluten-Free'
+  ];
+
+  const handleDietaryClick = (opt) => {
+    const currentList = Array.isArray(preferences.dietary)
+      ? preferences.dietary
+      : [preferences.dietary];
+
+    if (opt === 'No Preference') {
+      setPreferences({ ...preferences, dietary: ['No Preference'] });
+      setToastMessage('');
+      return;
+    }
+
+    const currentWithoutDefault = currentList.filter((d) => d !== 'No Preference');
+
+    if (currentWithoutDefault.includes(opt)) {
+      const next = currentWithoutDefault.filter((d) => d !== opt);
+      setPreferences({
+        ...preferences,
+        dietary: next.length === 0 ? ['No Preference'] : next,
+      });
+      setToastMessage('');
+    } else {
+      if (currentWithoutDefault.length >= 2) {
+        showToast('You can select up to 2 dietary preferences.');
+      } else {
+        setPreferences({
+          ...preferences,
+          dietary: [...currentWithoutDefault, opt],
+        });
+        setToastMessage('');
+      }
+    }
+  };
+
+  const getPreferencesPayload = () => {
+    const dietaryString = Array.isArray(preferences.dietary)
+      ? preferences.dietary.join(', ')
+      : preferences.dietary || 'No Preference';
+    return {
+      ...preferences,
+      dietary: dietaryString,
+    };
+  };
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
@@ -47,7 +99,8 @@ export default function MealPlannerModal({ isOpen, onClose, onSubmitRecipe }) {
     setIsGenerating(true);
     setToastMessage('');
     try {
-      const plan = await generateMealPlan(preferences);
+      const payload = getPreferencesPayload();
+      const plan = await generateMealPlan(payload);
       setMealPlanResult(plan);
       savePlanRecipes(plan);
       setActiveStep('plan');
@@ -62,7 +115,8 @@ export default function MealPlannerModal({ isOpen, onClose, onSubmitRecipe }) {
     if (isGenerating) return;
     setIsGenerating(true);
     try {
-      const plan = await generateMealPlan(preferences);
+      const payload = getPreferencesPayload();
+      const plan = await generateMealPlan(payload);
       setMealPlanResult(plan);
       savePlanRecipes(plan);
       showToast('🔄 Meal plan regenerated successfully');
@@ -163,10 +217,11 @@ export default function MealPlannerModal({ isOpen, onClose, onSubmitRecipe }) {
     setIsGenerating(true);
 
     try {
+      const payload = getPreferencesPayload();
       const newRecipe = await getSwapMealCandidate(
         type,
         currentName,
-        preferences
+        payload
       );
 
       if (newRecipe) {
@@ -293,44 +348,57 @@ export default function MealPlannerModal({ isOpen, onClose, onSubmitRecipe }) {
               </select>
             </div>
 
-            {/* 3. Dietary & 4. Cuisine */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">
+            {/* 3. Dietary Preference */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
                   3. Dietary Preference
                 </label>
-                <select
-                  value={preferences.dietary}
-                  onChange={(e) => setPreferences({ ...preferences, dietary: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-slate-700/60 border border-gray-200 dark:border-slate-600 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-emerald-500"
-                >
-                  <option value="No Preference">No Preference</option>
-                  <option value="Vegetarian">Vegetarian</option>
-                  <option value="High Protein">High Protein</option>
-                  <option value="Low Carb">Low Carb</option>
-                  <option value="Dairy-Free">Dairy-Free</option>
-                  <option value="Gluten-Free">Gluten-Free</option>
-                </select>
+                <span className="text-[10px] text-slate-400 dark:text-slate-400 font-normal">
+                  You can select up to 2 options
+                </span>
               </div>
+              <div className="flex flex-wrap gap-2">
+                {dietaryOptions.map((opt) => {
+                  const isSelected = Array.isArray(preferences.dietary)
+                    ? preferences.dietary.includes(opt)
+                    : preferences.dietary === opt;
+                  return (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => handleDietaryClick(opt)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition border min-h-[36px] ${
+                        isSelected
+                          ? 'bg-emerald-500 text-white border-emerald-500 shadow-sm'
+                          : 'bg-gray-50 dark:bg-slate-700/60 text-slate-700 dark:text-slate-200 border-gray-200 dark:border-slate-600 hover:bg-gray-100'
+                      }`}
+                    >
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">
-                  4. Cuisine Preference
-                </label>
-                <select
-                  value={preferences.cuisine}
-                  onChange={(e) => setPreferences({ ...preferences, cuisine: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-slate-700/60 border border-gray-200 dark:border-slate-600 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-emerald-500"
-                >
-                  <option value="Any Cuisine">Any Cuisine</option>
-                  <option value="Pakistani">Pakistani</option>
-                  <option value="Indian">Indian</option>
-                  <option value="Italian">Italian</option>
-                  <option value="Chinese">Chinese</option>
-                  <option value="Mediterranean">Mediterranean</option>
-                  <option value="Mexican">Mexican</option>
-                </select>
-              </div>
+            {/* 4. Cuisine Preference */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1.5">
+                4. Cuisine Preference
+              </label>
+              <select
+                value={preferences.cuisine}
+                onChange={(e) => setPreferences({ ...preferences, cuisine: e.target.value })}
+                className="w-full px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-slate-700/60 border border-gray-200 dark:border-slate-600 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-emerald-500 font-medium"
+              >
+                <option value="Any Cuisine">Any Cuisine</option>
+                <option value="Pakistani">Pakistani</option>
+                <option value="Indian">Indian</option>
+                <option value="Italian">Italian</option>
+                <option value="Chinese">Chinese</option>
+                <option value="Mediterranean">Mediterranean</option>
+                <option value="Mexican">Mexican</option>
+              </select>
             </div>
 
             {/* 5. Spice, 6. Budget, 7. Cooking Skill */}
