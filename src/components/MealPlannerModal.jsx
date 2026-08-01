@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Calendar, Sparkles, RefreshCw, ChevronRight, Sliders, ArrowLeft, Clock, Flame, Copy, Share2, FileText } from 'lucide-react';
+import { X, Calendar, Sparkles, RefreshCw, ChevronRight, Sliders, ArrowLeft, Clock, Flame, Copy, Share2, FileText, ChevronDown } from 'lucide-react';
 import { generateMealPlan, getSwapMealCandidate } from '../services/mealPlanner';
 import { generateMealPlanPDF } from '../utils/pdfService';
 import { historyManager } from '../utils/historyManager';
@@ -15,6 +15,8 @@ export default function MealPlannerModal({ isOpen, onClose, onSubmitRecipe }) {
     budget: 'No Preference',
     skill: 'Any Level'
   });
+
+  const [isDietaryDropdownOpen, setIsDietaryDropdownOpen] = useState(false);
 
   const dietaryOptions = [
     'No Preference',
@@ -348,57 +350,100 @@ export default function MealPlannerModal({ isOpen, onClose, onSubmitRecipe }) {
               </select>
             </div>
 
-            {/* 3. Dietary Preference */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
-                  3. Dietary Preference
-                </label>
-                <span className="text-[10px] text-slate-400 dark:text-slate-400 font-normal">
-                  You can select up to 2 options
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {dietaryOptions.map((opt) => {
-                  const isSelected = Array.isArray(preferences.dietary)
-                    ? preferences.dietary.includes(opt)
-                    : preferences.dietary === opt;
-                  return (
-                    <button
-                      key={opt}
-                      type="button"
-                      onClick={() => handleDietaryClick(opt)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition border min-h-[36px] ${
-                        isSelected
-                          ? 'bg-emerald-500 text-white border-emerald-500 shadow-sm'
-                          : 'bg-gray-50 dark:bg-slate-700/60 text-slate-700 dark:text-slate-200 border-gray-200 dark:border-slate-600 hover:bg-gray-100'
-                      }`}
-                    >
-                      {opt}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            {/* 3. Dietary & 4. Cuisine */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* 3. Dietary Preference */}
+              <div className="relative">
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                    3. Dietary Preference
+                  </label>
+                  <span className="text-[10px] text-slate-400 dark:text-slate-400 font-normal">
+                    You can select up to 2 options
+                  </span>
+                </div>
 
-            {/* 4. Cuisine Preference */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1.5">
-                4. Cuisine Preference
-              </label>
-              <select
-                value={preferences.cuisine}
-                onChange={(e) => setPreferences({ ...preferences, cuisine: e.target.value })}
-                className="w-full px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-slate-700/60 border border-gray-200 dark:border-slate-600 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-emerald-500 font-medium"
-              >
-                <option value="Any Cuisine">Any Cuisine</option>
-                <option value="Pakistani">Pakistani</option>
-                <option value="Indian">Indian</option>
-                <option value="Italian">Italian</option>
-                <option value="Chinese">Chinese</option>
-                <option value="Mediterranean">Mediterranean</option>
-                <option value="Mexican">Mexican</option>
-              </select>
+                {/* Custom Select Trigger Header Box */}
+                <button
+                  type="button"
+                  onClick={() => setIsDietaryDropdownOpen((prev) => !prev)}
+                  className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-slate-700/60 border border-gray-200 dark:border-slate-600 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-emerald-500 font-medium flex items-center justify-between min-h-[38px] text-left"
+                >
+                  <span className="truncate">
+                    {Array.isArray(preferences.dietary) && preferences.dietary.length > 0
+                      ? preferences.dietary.join(', ')
+                      : 'No Preference'}
+                  </span>
+                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 dark:text-slate-400 transition-transform duration-200 flex-shrink-0 ml-1.5 ${isDietaryDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {/* Custom Options Dropdown Menu Popover */}
+                {isDietaryDropdownOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setIsDietaryDropdownOpen(false)}
+                    />
+                    <div className="absolute left-0 top-full mt-1 w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-xl shadow-xl z-20 py-1 max-h-56 overflow-y-auto">
+                      {dietaryOptions.map((opt) => {
+                        const isSelected = Array.isArray(preferences.dietary)
+                          ? preferences.dietary.includes(opt)
+                          : preferences.dietary === opt;
+
+                        return (
+                          <button
+                            key={opt}
+                            type="button"
+                            onClick={() => {
+                              handleDietaryClick(opt);
+                            }}
+                            className={`w-full px-3 py-2 text-left text-xs flex items-center gap-2 transition hover:bg-emerald-50 dark:hover:bg-slate-700 ${
+                              isSelected
+                                ? 'font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/30'
+                                : 'font-medium text-slate-700 dark:text-slate-200'
+                            }`}
+                          >
+                            <div
+                              className={`w-4 h-4 rounded border flex items-center justify-center transition-colors flex-shrink-0 ${
+                                isSelected
+                                  ? 'bg-emerald-500 border-emerald-500 text-white'
+                                  : 'border-gray-300 dark:border-slate-500 bg-white dark:bg-slate-700'
+                              }`}
+                            >
+                              {isSelected && (
+                                <svg className="w-3 h-3 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="3" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                              )}
+                            </div>
+                            <span className="truncate">{opt}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* 4. Cuisine Preference */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">
+                  4. Cuisine Preference
+                </label>
+                <select
+                  value={preferences.cuisine}
+                  onChange={(e) => setPreferences({ ...preferences, cuisine: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-slate-700/60 border border-gray-200 dark:border-slate-600 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-emerald-500 font-medium min-h-[38px]"
+                >
+                  <option value="Any Cuisine">Any Cuisine</option>
+                  <option value="Pakistani">Pakistani</option>
+                  <option value="Indian">Indian</option>
+                  <option value="Italian">Italian</option>
+                  <option value="Chinese">Chinese</option>
+                  <option value="Mediterranean">Mediterranean</option>
+                  <option value="Mexican">Mexican</option>
+                </select>
+              </div>
             </div>
 
             {/* 5. Spice, 6. Budget, 7. Cooking Skill */}
