@@ -11,7 +11,7 @@ export default function PersonalizedModal({ isOpen, onClose, onSubmitQuery }) {
   if (!isOpen) return null;
 
   const dietaryOptions = ['Any', 'Vegetarian', 'Vegan', 'Gluten-Free', 'Keto'];
-  const cuisineOptions = ['Any', 'Italian', 'Mediterranean', 'Asian', 'Mexican', 'Indian'];
+  const cuisineOptions = ['Any', 'Italian', 'Mediterranean', 'Asian', 'Mexican', 'Indian', 'Pakistani'];
   const goalOptions = ['Any', 'High Protein', 'Quick & Easy', 'Budget Friendly', 'Low Calorie', 'Spicy'];
   const avoidOptions = ['None', 'Nuts', 'Dairy', 'Seafood', 'Eggs'];
 
