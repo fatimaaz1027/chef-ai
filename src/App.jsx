@@ -19,8 +19,10 @@ import MealPlannerModal from './components/MealPlannerModal';
 import { findOrGenerateRecipe } from './data/recipes';
 import { historyManager } from './utils/historyManager';
 import { sendMessageToGemini } from './services/geminiService';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import AuthScreen from './components/AuthScreen';
 
-export default function App() {
+function ChefAIAppContent() {
   // Strict Theme Initialization: Always start in Light Mode if no saved preference exists
   const [darkMode, setDarkMode] = useState(() => {
     const savedTheme = localStorage.getItem('chefai_theme');
@@ -310,6 +312,20 @@ export default function App() {
     }
   };
 
+  const { isAuthenticated, logout, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 dark:bg-slate-900">
+        <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <AuthScreen />;
+  }
+
   return (
     <div className="relative z-10 w-full min-h-screen overflow-x-hidden transition-colors duration-300">
       {/* Background Floating Food Icons */}
@@ -384,6 +400,7 @@ export default function App() {
         darkMode={darkMode}
         onToggleDark={handleToggleDark}
         onClearHistory={handleClearChat}
+        onLogout={logout}
       />
 
       {/* Top Navbar */}
@@ -452,5 +469,13 @@ export default function App() {
         onSubmit={handleQuery}
       />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <ChefAIAppContent />
+    </AuthProvider>
   );
 }

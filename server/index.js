@@ -11,6 +11,10 @@ const PORT = 5000;
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 
+app.get("/", (req, res) => {
+  res.json({ status: "ChefAI Server Running", port: PORT });
+});
+
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
@@ -162,6 +166,9 @@ Never return JSON inside triple backticks.
 
   } catch (error) {
     console.error("Gemini API error:", error);
+    console.error("Error message:", error?.message);
+    console.error("Error status:", error?.status);
+    console.error("Error details:", error?.details);
 
     res.status(500).json({
       error: "Failed to get a response from Gemini.",
@@ -569,4 +576,11 @@ If no recognizable ingredients are visible, return:
     });
   }
 });
+
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`ChefAI server running on http://localhost:${PORT}`);
+  });
+}
+
 module.exports = app;
