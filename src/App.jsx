@@ -19,11 +19,14 @@ import ScanIngredientsModal from './components/ScanIngredientsModal';
 import MealPlannerModal from './components/MealPlannerModal';
 import { findOrGenerateRecipe } from './data/recipes';
 import { historyManager } from './utils/historyManager';
+import { chatHistoryManager } from './utils/chatHistoryManager';
 import { sendMessageToGemini } from './services/geminiService';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import AuthScreen from './components/AuthScreen';
 
 function ChefAIAppContent() {
+  const { user, isAuthenticated, logout, loading } = useAuth();
+
   // Strict Theme Initialization: Always start in Light Mode if no saved preference exists
   const [darkMode, setDarkMode] = useState(() => {
     const savedTheme = localStorage.getItem('chefai_theme');
@@ -34,7 +37,7 @@ function ChefAIAppContent() {
     return savedTheme === 'dark';
   });
 
-  const [activeView, setActiveView] = useState('home'); // 'home' | 'favorites' | 'grocery'
+  const [activeView, setActiveView] = useState('home'); // 'home' | 'favorites' | 'grocery' | 'preferences'
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isRecipeIdeasOpen, setIsRecipeIdeasOpen] = useState(false);
@@ -43,6 +46,17 @@ function ChefAIAppContent() {
   const [isMealPlannerOpen, setIsMealPlannerOpen] = useState(false);
   const [isChatActive, setIsChatActive] = useState(false);
   const [messages, setMessages] = useState([]);
+  const [currentConversationId, setCurrentConversationId] = useState(null);
+
+  const messagesRef = useRef(messages);
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
+  const currentConvIdRef = useRef(currentConversationId);
+  useEffect(() => {
+    currentConvIdRef.current = currentConversationId;
+  }, [currentConversationId]);
 
   const handleMealRecipeSubmit = (recipe) => {
     if (recipe) {
@@ -71,6 +85,7 @@ function ChefAIAppContent() {
     };
     setMessages((prev) => [...prev, botMsg]);
   };
+
   const [inputVal, setInputVal] = useState('');
   const [groceryRecipe, setGroceryRecipe] = useState(null);
 
@@ -101,11 +116,25 @@ function ChefAIAppContent() {
   };
 
   const handleClearChat = () => {
+    setCurrentConversationId(null);
+    currentConvIdRef.current = null;
     setMessages([]);
+    messagesRef.current = [];
     setIsChatActive(false);
     setInputVal('');
     setActiveView('home');
     handleClosePanels();
+  };
+
+  const handleSelectConversation = (conv) => {
+    if (!conv) return;
+    setCurrentConversationId(conv.id);
+    currentConvIdRef.current = conv.id;
+    const convMsgs = conv.messages || [];
+    setMessages(convMsgs);
+    messagesRef.current = convMsgs;
+    setIsChatActive(true);
+    setActiveView('home');
   };
 
   const handleOpenGrocery = (recipe) => {
@@ -113,86 +142,7 @@ function ChefAIAppContent() {
     setActiveView('grocery');
   };
 
-  const handleSelectSimilar = async (recipeName) => {
-    if (!recipeName || !recipeName.trim()) return;
-
-    setActiveView('home');
-    setIsChatActive(true);
-    setInputVal('');
-
-    const rawText = `Give me the complete recipe for ${recipeName.trim()}`;
-    const userPrefs = historyManager.getPreferences();
-
-    const userMsg = {
-      id: Date.now(),
-      type: 'user',
-      text: rawText,
-    };
-
-    const typingMsg = {
-      id: Date.now() + 1,
-      type: 'typing',
-    };
-
-    setMessages((prev) => [...prev, userMsg, typingMsg]);
-
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: rawText,
-          preferences: userPrefs,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      console.log('Similar recipe response:', data);
-
-      setMessages((prev) =>
-        prev.filter((m) => m.type !== 'typing')
-      );
-
-      if (data.type === 'recipe' && data.recipe) {
-        historyManager.addGeneratedRecipe(data.recipe);
-
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now() + 2,
-            type: 'recipe',
-            recipe: data.recipe,
-          },
-        ]);
-
-        return;
-      }
-
-      throw new Error('ChefAI did not return a recipe.');
-
-    } catch (error) {
-      console.error('Similar recipe error:', error);
-
-      setMessages((prev) =>
-        prev
-          .filter((m) => m.type !== 'typing')
-          .concat({
-            id: Date.now() + 3,
-            type: 'bot',
-            text: `Sorry, I couldn't generate the ${recipeName} recipe right now. Please try again.`,
-          })
-      );
-    }
-  };
-
-  const handleQuery = async (queryText) => {
+  const processChatMessage = async (queryText) => {
     if (!queryText || !queryText.trim()) return;
 
     setActiveView('home');
@@ -202,22 +152,52 @@ function ChefAIAppContent() {
     const rawText = queryText.trim();
     const userPrefs = historyManager.getPreferences();
 
-    // Show user's message immediately
+    let activeConvId = currentConvIdRef.current;
+    let isNewConv = false;
+    if (!activeConvId) {
+      activeConvId = `conv_${user?.uid || 'anon'}_${Date.now()}`;
+      setCurrentConversationId(activeConvId);
+      currentConvIdRef.current = activeConvId;
+      isNewConv = true;
+    }
+
     const userMsg = {
-      id: Date.now(),
+      id: `msg_user_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      sender: 'user',
       type: 'user',
       text: rawText,
+      timestamp: Date.now(),
     };
 
     const typingMsg = {
-      id: Date.now() + 1,
+      id: `msg_typing_${Date.now()}`,
+      sender: 'bot',
       type: 'typing',
     };
 
-    setMessages((prev) => [...prev, userMsg, typingMsg]);
+    const currentList = messagesRef.current.filter((m) => m.type !== 'typing');
+    const updatedMessagesWithUser = [...currentList, userMsg];
+
+    setMessages([...updatedMessagesWithUser, typingMsg]);
+    messagesRef.current = [...updatedMessagesWithUser, typingMsg];
+
+    const firstText = updatedMessagesWithUser[0]?.text || rawText;
+    const convTitle = firstText.length > 35 ? `${firstText.slice(0, 35)}...` : firstText;
+
+    const currentConvObj = {
+      id: activeConvId,
+      title: convTitle,
+      messages: updatedMessagesWithUser,
+      createdAt: isNewConv ? Date.now() : undefined,
+      updatedAt: Date.now(),
+    };
+
+    // Immediately save user message to Firebase & LocalStorage
+    if (user && user.uid) {
+      chatHistoryManager.saveConversation(user.uid, currentConvObj);
+    }
 
     try {
-      // Send message to ChefAI backend with saved user preferences
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -234,90 +214,75 @@ function ChefAIAppContent() {
       }
 
       const data = await response.json();
-
       console.log('ChefAI API response:', data);
 
-      // Remove typing indicator
-      setMessages((prev) =>
-        prev.filter((m) => m.type !== 'typing')
-      );
+      const baseList = messagesRef.current.filter((m) => m.type !== 'typing');
 
-      // --------------------------------
-      // RECIPE RESPONSE
-      // --------------------------------
+      let botMsg;
       if (data.type === 'recipe' && data.recipe) {
-        const recipe = data.recipe;
-
-        // Save generated recipe to history
-        historyManager.addGeneratedRecipe(recipe);
-
-        // Display using existing beautiful RecipeCard
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now() + 2,
-            type: 'recipe',
-            recipe: recipe,
-          },
-        ]);
-
-        return;
+        historyManager.addGeneratedRecipe(data.recipe);
+        botMsg = {
+          id: `msg_bot_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+          sender: 'bot',
+          type: 'recipe',
+          recipe: data.recipe,
+          timestamp: Date.now(),
+        };
+      } else if (data.type === 'bot' && data.text) {
+        botMsg = {
+          id: `msg_bot_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+          sender: 'bot',
+          type: 'bot',
+          text: data.text,
+          timestamp: Date.now(),
+        };
+      } else if (data.reply) {
+        botMsg = {
+          id: `msg_bot_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+          sender: 'bot',
+          type: 'bot',
+          text: data.reply,
+          timestamp: Date.now(),
+        };
+      } else {
+        throw new Error('Invalid response received from ChefAI server.');
       }
 
-      // --------------------------------
-      // NORMAL BOT RESPONSE
-      // --------------------------------
-      if (data.type === 'bot' && data.text) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now() + 2,
-            type: 'bot',
-            text: data.text,
-          },
-        ]);
+      const finalMessages = [...baseList, botMsg];
+      setMessages(finalMessages);
+      messagesRef.current = finalMessages;
 
-        return;
+      if (user && user.uid) {
+        chatHistoryManager.saveConversation(user.uid, {
+          id: activeConvId,
+          title: convTitle,
+          messages: finalMessages,
+          createdAt: currentConvObj.createdAt,
+          updatedAt: Date.now(),
+        });
       }
-
-      // --------------------------------
-      // BACKWARD COMPATIBILITY
-      // --------------------------------
-      if (data.reply) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now() + 2,
-            type: 'bot',
-            text: data.reply,
-          },
-        ]);
-
-        return;
-      }
-
-      // Unexpected response
-      throw new Error(
-        'Invalid response received from ChefAI server.'
-      );
-
     } catch (error) {
       console.error('ChefAI request error:', error);
 
-      setMessages((prev) =>
-        prev
-          .filter((m) => m.type !== 'typing')
-          .concat({
-            id: Date.now() + 3,
-            type: 'bot',
-            text:
-              'Sorry, I could not connect to ChefAI right now. Please make sure the ChefAI server is running.',
-          })
-      );
+      const baseList = messagesRef.current.filter((m) => m.type !== 'typing');
+      const errDisplayMsg = {
+        id: `msg_err_${Date.now()}`,
+        sender: 'bot',
+        type: 'bot',
+        text: 'Sorry, I could not connect to ChefAI right now. Please make sure the ChefAI server is running.',
+      };
+      setMessages([...baseList, errDisplayMsg]);
+      messagesRef.current = [...baseList, errDisplayMsg];
     }
   };
 
-  const { isAuthenticated, logout, loading } = useAuth();
+  const handleQuery = (queryText) => processChatMessage(queryText);
+
+  const handleSelectSimilar = (recipeName) => {
+    if (!recipeName || !recipeName.trim()) return;
+    const rawText = `Give me the complete recipe for ${recipeName.trim()}`;
+    processChatMessage(rawText);
+  };
 
   if (loading) {
     return (
@@ -368,6 +333,12 @@ function ChefAIAppContent() {
           handleQuery(query);
         }}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        user={user}
+        onSelectConversation={(conv) => {
+          handleClosePanels();
+          handleSelectConversation(conv);
+        }}
+        onClearChat={handleClearChat}
       />
 
       {/* Recipe Ideas Modal */}

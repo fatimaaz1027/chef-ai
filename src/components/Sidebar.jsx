@@ -15,6 +15,7 @@ import {
   SquarePen
 } from 'lucide-react';
 import { historyManager } from '../utils/historyManager';
+import { chatHistoryManager } from '../utils/chatHistoryManager';
 
 export default function Sidebar({
   isOpen,
@@ -29,22 +30,48 @@ export default function Sidebar({
   onSelectRecipe,
   onSelectChat,
   onSelectFeature,
-  onOpenSettings
+  onOpenSettings,
+  user,
+  onSelectConversation,
+  onClearChat,
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [favoritesCount, setFavoritesCount] = useState(0);
   const [groceryCount, setGroceryCount] = useState(0);
   const [isAIOpen, setIsAIOpen] = useState(false);
+  const [conversations, setConversations] = useState([]);
   const [historyData, setHistoryData] = useState({
     generated: [],
     saved: [],
     favorites: [],
   });
 
-  const loadCountsAndHistory = () => {
+  const loadCountsAndHistory = async () => {
     setFavoritesCount(historyManager.getFavoritesCount());
     setGroceryCount(historyManager.getGroceryCount());
-    setHistoryData(historyManager.searchHistory(searchQuery));
+    const generated = historyManager.searchHistory(searchQuery).generated;
+
+    let convs = [];
+    if (user && user.uid) {
+      convs = await chatHistoryManager.fetchUserConversations(user.uid);
+    } else {
+      convs = chatHistoryManager.getLocalConversations();
+    }
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      convs = convs.filter(
+        (c) =>
+          (c.title && c.title.toLowerCase().includes(q)) ||
+          (c.messages && c.messages.some((m) => m.text && m.text.toLowerCase().includes(q)))
+      );
+    }
+
+    setConversations(convs);
+    setHistoryData({
+      generated,
+      conversations: convs,
+    });
   };
 
   useEffect(() => {
@@ -54,11 +81,17 @@ export default function Sidebar({
     return () => {
       window.removeEventListener('chefai_data_changed', handleDataChanged);
     };
-  }, [isOpen, searchQuery, activeView]);
+  }, [isOpen, searchQuery, activeView, user]);
 
-  const handleClearHistory = () => {
+  const handleClearHistory = async () => {
     historyManager.clearAllHistory();
-    loadCountsAndHistory();
+    if (user && user.uid) {
+      await chatHistoryManager.clearUserHistory(user.uid);
+    }
+    if (onClearChat) {
+      onClearChat();
+    }
+    await loadCountsAndHistory();
   };
 
   const handleSelectRecipe = (recipe) => {
@@ -71,6 +104,7 @@ export default function Sidebar({
   };
 
   const hasHistory =
+    conversations.length > 0 ||
     historyData.generated.length > 0 ||
     historyData.saved.length > 0 ||
     historyData.favorites.length > 0;
@@ -307,6 +341,32 @@ export default function Sidebar({
               </div>
             ) : (
               <>
+                {conversations.length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-semibold text-gray-400 mb-1">Conversations</p>
+                    <div className="space-y-1">
+                      {conversations.slice(0, 10).map((conv) => (
+                        <button
+                          key={conv.id}
+                          onClick={() => {
+                            onNavigate('home');
+                            if (onSelectConversation) {
+                              onSelectConversation(conv);
+                            }
+                            onClose();
+                          }}
+                          className="w-full text-left p-2 rounded-xl hover:bg-emerald-50 transition min-h-[38px] flex items-center gap-2 group"
+                        >
+                          <span className="text-sm">💬</span>
+                          <p className="text-xs font-medium text-slate-700 truncate group-hover:text-emerald-700 flex-1">
+                            {conv.title || 'Chat Conversation'}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {historyData.generated.length > 0 && (
                   <div>
                     <p className="text-[10px] font-semibold text-gray-400 mb-1">Generated Recipes</p>
