@@ -16,8 +16,6 @@ export default function MealPlannerModal({ isOpen, onClose, onSubmitRecipe }) {
     skill: 'Any Level'
   });
 
-  const [isDietaryDropdownOpen, setIsDietaryDropdownOpen] = useState(false);
-
   const dietaryOptions = [
     'No Preference',
     'Vegetarian',
@@ -353,7 +351,7 @@ export default function MealPlannerModal({ isOpen, onClose, onSubmitRecipe }) {
             {/* 3. Dietary & 4. Cuisine */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* 3. Dietary Preference */}
-              <div className="relative">
+              <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
                     3. Dietary Preference
@@ -362,67 +360,28 @@ export default function MealPlannerModal({ isOpen, onClose, onSubmitRecipe }) {
                     You can select up to 2 options
                   </span>
                 </div>
-
-                {/* Custom Select Trigger Header Box */}
-                <button
-                  type="button"
-                  onClick={() => setIsDietaryDropdownOpen((prev) => !prev)}
-                  className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-slate-700/60 border border-gray-200 dark:border-slate-600 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-emerald-500 font-medium flex items-center justify-between min-h-[38px] text-left"
-                >
-                  <span className="truncate">
-                    {Array.isArray(preferences.dietary) && preferences.dietary.length > 0
+                <select
+                  value={
+                    Array.isArray(preferences.dietary) && preferences.dietary.length > 1
                       ? preferences.dietary.join(', ')
-                      : 'No Preference'}
-                  </span>
-                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 dark:text-slate-400 transition-transform duration-200 flex-shrink-0 ml-1.5 ${isDietaryDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {/* Custom Options Dropdown Menu Popover */}
-                {isDietaryDropdownOpen && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-10"
-                      onClick={() => setIsDietaryDropdownOpen(false)}
-                    />
-                    <div className="absolute left-0 top-full mt-1 w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-xl shadow-xl z-20 py-1 max-h-56 overflow-y-auto">
-                      {dietaryOptions.map((opt) => {
-                        const isSelected = Array.isArray(preferences.dietary)
-                          ? preferences.dietary.includes(opt)
-                          : preferences.dietary === opt;
-
-                        return (
-                          <button
-                            key={opt}
-                            type="button"
-                            onClick={() => {
-                              handleDietaryClick(opt);
-                            }}
-                            className={`w-full px-3 py-2 text-left text-xs flex items-center gap-2 transition hover:bg-emerald-50 dark:hover:bg-slate-700 ${
-                              isSelected
-                                ? 'font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/30'
-                                : 'font-medium text-slate-700 dark:text-slate-200'
-                            }`}
-                          >
-                            <div
-                              className={`w-4 h-4 rounded border flex items-center justify-center transition-colors flex-shrink-0 ${
-                                isSelected
-                                  ? 'bg-emerald-500 border-emerald-500 text-white'
-                                  : 'border-gray-300 dark:border-slate-500 bg-white dark:bg-slate-700'
-                              }`}
-                            >
-                              {isSelected && (
-                                <svg className="w-3 h-3 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="3" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
-                              )}
-                            </div>
-                            <span className="truncate">{opt}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </>
-                )}
+                      : (Array.isArray(preferences.dietary) ? preferences.dietary[0] : preferences.dietary) || 'No Preference'
+                  }
+                  onChange={(e) => {
+                    handleDietaryClick(e.target.value);
+                  }}
+                  className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-slate-700/60 border border-gray-200 dark:border-slate-600 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-emerald-500 font-medium min-h-[38px]"
+                >
+                  {dietaryOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                  {Array.isArray(preferences.dietary) && preferences.dietary.length > 1 && (
+                    <option value={preferences.dietary.join(', ')}>
+                      {preferences.dietary.join(', ')}
+                    </option>
+                  )}
+                </select>
               </div>
 
               {/* 4. Cuisine Preference */}
