@@ -21,7 +21,7 @@ const ai = new GoogleGenAI({
 
 app.post("/api/chat", async (req, res) => {
   try {
-    const { message } = req.body;
+    const { message, preferences } = req.body;
 
     if (!message || !message.trim()) {
       return res.status(400).json({
@@ -29,8 +29,33 @@ app.post("/api/chat", async (req, res) => {
       });
     }
 
+    let preferencesContext = "";
+    if (preferences) {
+      const dietaryString = Array.isArray(preferences.dietary)
+        ? preferences.dietary.join(", ")
+        : preferences.dietary || "No Preference";
+
+      preferencesContext = `
+USER SAVED PREFERENCES (CRITICAL: MUST RESPECT AND ADHERE TO THESE IN ALL RECOMMENDATIONS & RECIPES):
+- Cuisine Style: ${preferences.cuisine || "Any Cuisine"}
+- Dietary Preferences: ${dietaryString}
+- Spice Level: ${preferences.spice || "No Preference"}
+- Cooking Skill Level: ${preferences.skill || "Any Level"}
+- Budget: ${preferences.budget || "No Preference"}
+
+CRITICAL REQUIREMENT:
+Whenever generating a recipe, meal idea, ingredient advice, or response, you MUST consider and strictly follow these user preferences as much as reasonably possible:
+1. DIETARY: Strictly respect dietary preferences (e.g. Vegetarian, Vegan, Halal, Low Carb, High Protein, Gluten-Free, Keto, Dairy-Free). If Vegetarian or Vegan, NEVER include meat, poultry, or fish. If Halal, ensure all ingredients are Halal-compliant.
+2. CUISINE: Adapt the recipe style, seasonings, and dish type to match the user's preferred Cuisine (e.g., Pakistani, Indian, Italian, Chinese, Mediterranean, Mexican).
+3. SPICE LEVEL: Match the spice level (Mild, Medium, Spicy, Extra Spicy).
+4. COOKING SKILL: Keep cooking instructions appropriate for the user's skill level (Beginner, Intermediate, Advanced).
+5. BUDGET: Respect budget considerations for ingredient selection.
+`;
+    }
+
     const prompt = `
 You are ChefAI, a friendly and professional AI cooking assistant.
+${preferencesContext}
 
 User message:
 "${message}"

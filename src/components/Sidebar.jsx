@@ -203,6 +203,29 @@ export default function Sidebar({
           </div>
         </div>
 
+        {/* Preferences Section */}
+        <div className="pt-1 border-t border-gray-100">
+          <button
+            onClick={() => {
+              onNavigate('preferences');
+              onClose();
+            }}
+            className={`w-full flex items-center justify-between p-2.5 rounded-xl font-semibold text-xs sm:text-sm transition min-h-[40px] ${activeView === 'preferences'
+              ? 'bg-emerald-500 text-white shadow-md'
+              : 'text-slate-700 hover:bg-emerald-50'
+              }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <span>⚙️</span>
+              <span>Preferences</span>
+            </div>
+            <ChevronRight
+              className={`w-4 h-4 ${activeView === 'preferences' ? 'text-white' : 'text-slate-400'
+                }`}
+            />
+          </button>
+        </div>
+
         {/* Saved & Grocery Section */}
         <div className="pt-1 border-t border-gray-100 space-y-1">
           {/* Saved Recipes */}

@@ -12,6 +12,7 @@ import ChatMessage from './components/ChatMessage';
 import GroceryModal from './components/GroceryModal';
 import FavoritesPage from './components/FavoritesPage';
 import GroceryPage from './components/GroceryPage';
+import PreferencesPage from './components/PreferencesPage';
 import RecipeIdeasModal from './components/RecipeIdeasModal';
 import PersonalizedModal from './components/PersonalizedModal';
 import ScanIngredientsModal from './components/ScanIngredientsModal';
@@ -120,6 +121,7 @@ function ChefAIAppContent() {
     setInputVal('');
 
     const rawText = `Give me the complete recipe for ${recipeName.trim()}`;
+    const userPrefs = historyManager.getPreferences();
 
     const userMsg = {
       id: Date.now(),
@@ -142,6 +144,7 @@ function ChefAIAppContent() {
         },
         body: JSON.stringify({
           message: rawText,
+          preferences: userPrefs,
         }),
       });
 
@@ -197,6 +200,7 @@ function ChefAIAppContent() {
     setInputVal('');
 
     const rawText = queryText.trim();
+    const userPrefs = historyManager.getPreferences();
 
     // Show user's message immediately
     const userMsg = {
@@ -213,7 +217,7 @@ function ChefAIAppContent() {
     setMessages((prev) => [...prev, userMsg, typingMsg]);
 
     try {
-      // Send message to ChefAI backend
+      // Send message to ChefAI backend with saved user preferences
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -221,6 +225,7 @@ function ChefAIAppContent() {
         },
         body: JSON.stringify({
           message: rawText,
+          preferences: userPrefs,
         }),
       });
 
@@ -464,6 +469,11 @@ function ChefAIAppContent() {
         {/* Grocery List View */}
         {activeView === 'grocery' && (
           <GroceryPage onGoHome={() => setActiveView('home')} />
+        )}
+
+        {/* Preferences View */}
+        {activeView === 'preferences' && (
+          <PreferencesPage onGoHome={() => setActiveView('home')} />
         )}
       </main>
 

@@ -284,4 +284,44 @@ export const historyManager = {
   getGroceryCount() {
     return this.getGroceryItems().length;
   },
+
+  // ==========================================
+  // USER PREFERENCES MANAGEMENT
+  // ==========================================
+  getPreferences() {
+    try {
+      const raw = localStorage.getItem('chefai_user_preferences');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return {
+          cuisine: parsed.cuisine || 'Any Cuisine',
+          dietary: Array.isArray(parsed.dietary)
+            ? (parsed.dietary.length > 0 ? parsed.dietary : ['No Preference'])
+            : (parsed.dietary ? [parsed.dietary] : ['No Preference']),
+          spice: parsed.spice || 'No Preference',
+          skill: parsed.skill || 'Any Level',
+          budget: parsed.budget || 'No Preference',
+        };
+      }
+    } catch (e) {
+      console.error('Error reading preferences from localStorage:', e);
+    }
+    return {
+      cuisine: 'Any Cuisine',
+      dietary: ['No Preference'],
+      spice: 'No Preference',
+      skill: 'Any Level',
+      budget: 'No Preference',
+    };
+  },
+  savePreferences(prefObj) {
+    try {
+      localStorage.setItem('chefai_user_preferences', JSON.stringify(prefObj));
+      notifyDataChanged();
+      return true;
+    } catch (e) {
+      console.error('Error saving preferences to localStorage:', e);
+      return false;
+    }
+  },
 };
