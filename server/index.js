@@ -19,6 +19,8 @@ const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
+const GEMINI_MODEL = "gemini-3.5-flash";
+
 app.post("/api/chat", async (req, res) => {
   try {
     const { message, preferences } = req.body;
@@ -159,7 +161,7 @@ Never return JSON inside triple backticks.
 `;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.6-flash",
+      model: GEMINI_MODEL,
       contents: prompt,
     });
 
@@ -336,7 +338,7 @@ RULES:
 `;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.6-flash",
+      model: GEMINI_MODEL,
       contents: prompt,
     });
 
@@ -462,7 +464,7 @@ Return ONLY JSON.
 `;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.6-flash",
+      model: GEMINI_MODEL,
       contents: prompt,
     });
 
@@ -545,7 +547,7 @@ If no recognizable ingredients are visible, return:
 `;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.6-flash",
+      model: GEMINI_MODEL,
       contents: [
         {
           role: "user",
