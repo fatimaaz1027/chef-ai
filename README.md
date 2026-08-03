@@ -193,11 +193,10 @@ GEMINI_API_KEY=your_gemini_api_key
 ```
 
 ### Configuration Notes
-- `.env` is used strictly for local development.
+- `.env` is used for local development.
 - `VITE_FIREBASE_*` variables are injected into the client bundle at build time by Vite.
 - `GEMINI_API_KEY` is utilized by the backend server / serverless functions only.
-- Production environment variables must be configured directly within the Vercel dashboard.
-- Never commit actual API keys or credentials to public repositories.
+- Production environment variables are configured directly within the Vercel dashboard.
 
 ---
 
